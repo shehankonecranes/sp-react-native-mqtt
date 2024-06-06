@@ -48,8 +48,6 @@
                                 @"willQos": @0,
                                 @"willRetainFlag": @NO,
                                 @"certificatePass": @"",
-                                @"certificate": @"",
-                                @"ca": @""
                                 };
         
     }

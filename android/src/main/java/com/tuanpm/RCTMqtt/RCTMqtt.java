@@ -1,12 +1,16 @@
 package com.tuanpm.RCTMqtt;
 
 import androidx.annotation.NonNull;
+
+import android.util.Base64;
 import android.util.Log;
+import android.content.res.AssetFileDescriptor;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableNativeMap;
@@ -24,10 +28,27 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+
+
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.io.ByteArrayInputStream;
+import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -38,7 +59,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nullable;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 public class RCTMqtt implements MqttCallbackExtended {
@@ -72,6 +97,9 @@ public class RCTMqtt implements MqttCallbackExtended {
         defaultOptions.putInt("willQos", 0);
         defaultOptions.putBoolean("willRetainFlag", false);
         defaultOptions.putBoolean("automaticReconnect", false);
+        defaultOptions.putString("certificate", "");
+        defaultOptions.putString("certificatePass","");
+        defaultOptions.putString("ca", "");
 
         createClient(options);
     }
@@ -135,6 +163,16 @@ public class RCTMqtt implements MqttCallbackExtended {
             defaultOptions.putBoolean("automaticReconnect", params.getBoolean("automaticReconnect"));
         }
 
+        if (params.hasKey("certificate")) {
+            defaultOptions.putString("certificate", params.getString("certificate"));
+        }
+        if (params.hasKey("certificatePass")) {
+            defaultOptions.putString("certificatePass", params.getString("certificatePass"));
+        }
+        if (params.hasKey("ca")) {
+            defaultOptions.putString("ca", params.getString("ca"));
+        }
+
         ReadableMap options = defaultOptions;
 
         // Set this wrapper as the callback handler
@@ -152,7 +190,47 @@ public class RCTMqtt implements MqttCallbackExtended {
         StringBuilder uri = new StringBuilder("tcp://");
         if (options.getBoolean("tls")) {
             uri = new StringBuilder("ssl://");
-            try {
+            String certificateBase64 = options.getString("certificate");
+            String caBase64 = options.getString("ca");
+
+            if(certificateBase64.length() > 0 && caBase64.length() > 0) {
+                try {
+
+                    KeyStore clientStore = KeyStore.getInstance("PKCS12");
+
+                    byte[] encodedCert = android.util.Base64.decode(certificateBase64, Base64.DEFAULT);
+                    ByteArrayInputStream isCertificate  =  new ByteArrayInputStream(encodedCert);
+                    clientStore.load(isCertificate, options.getString("certificatePass").toCharArray());
+
+                    KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                    kmf.init(clientStore, "testPass".toCharArray());
+                    KeyManager[] kms = kmf.getKeyManagers();
+
+                    byte[] encodedCA = android.util.Base64.decode(caBase64, Base64.DEFAULT);
+                    ByteArrayInputStream isCA  =  new ByteArrayInputStream(encodedCA);
+                    var cf = CertificateFactory.getInstance("X.509");
+                    var ca = cf.generateCertificate(isCA);
+
+                    KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                    trustStore.load(null,null);
+                    trustStore.setCertificateEntry("ca", ca);
+
+                    TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    tmf.init(trustStore);
+                    TrustManager[] tms = tmf.getTrustManagers();
+
+                    SSLContext sslContext = null;
+                    sslContext = SSLContext.getInstance("TLS");
+                    sslContext.init(kms, tms, new SecureRandom());
+                    mqttOptions.setSocketFactory(sslContext.getSocketFactory());
+
+                } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                try {
                 /*
                  * http://stackoverflow.com/questions/3761737/https-get-ssl-with-android-and-
                  * self-signed-server-certificate
@@ -181,6 +259,7 @@ public class RCTMqtt implements MqttCallbackExtended {
                 mqttOptions.setSocketFactory(sslContext.getSocketFactory());
             } catch (Exception e) {
                 e.printStackTrace();
+            }
             }
         }
 

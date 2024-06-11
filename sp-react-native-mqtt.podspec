@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
   s.name = package[:name]
   s.version = package[:version]
   s.license = { type: "MIT" }
-  s.homepage = "https://github.com/SudoPlz/sp-react-native-mqtt"
+  s.homepage = "https://github.com/shehankonecranes/sp-react-native-mqtts"
   s.authors = package[:author][:name]
   s.summary = package[:description]
   s.source = { git: package[:repository][:url] }

@@ -1,14 +1,14 @@
 {
   "name": "sp-react-native-mqtt",
   "version": "0.5.1",
-  "description": "MQTT client for react-native",
+  "description": "MQTT client for react-native with certificate",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SudoPlz/react-native-mqtt.git"
+    "url": "git+https://github.com/shehankonecranes/sp-react-native-mqtts.git"
   },
   "keywords": [
     "mqtt",
@@ -16,40 +16,14 @@
     "iot"
   ],
   "author": {
-    "name": "Ioannis Kokkinidis",
-    "email": "sudoplz@gmail.com",
-    "url": "https://www.linkedin.com/in/sudoplz"
+    "name": "",
+    "email": "",
+    "url": ""
   },
-  "contributors": [
-    {
-      "name": "Yury Korolev",
-      "email": "yury.korolev@gmail.com",
-      "url": "http://anjlab.com"
-    },
-    {
-      "name": "Alexander Ustinov",
-      "email": "rusfearuth@gmail.com",
-      "url": "http://github.com/rusfearuth"
-    },
-    {
-      "name": "Tuan PM",
-      "email": "tuanpm@live.com",
-      "url": "http://tuanpm.net"
-    },
-    {
-      "name": "taoqf",
-      "email": "tao_qiufeng@126.com",
-      "url": "http://github.com/taoqf"
-    },
-    {
-      "name": "Scott Spitler",
-      "email": "scott@kuhmute.com",
-      "url": "https://kuhmute.dev"
-    }
-  ],
+  "contributors": [],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SudoPlz/react-native-mqtt/issues"
+    "url": "https://github.com/shehankonecranes/sp-react-native-mqtts/issues"
   },
-  "homepage": "https://github.com/SudoPlz/react-native-mqtt#readme"
+  "homepage": "https://github.com/shehankonecranes/sp-react-native-mqtts"
 }

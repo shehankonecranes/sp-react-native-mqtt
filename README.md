@@ -22,19 +22,19 @@ A [react-native](https://github.com/facebook/react-native) mqtt client module th
 
 #### Step 1:
 ```bash
-npm install sp-react-native-mqtt --save
+npm install shehankonecranes/sp-react-native-mqtts --save
 ```
 
 or
 
 ```bash
-yarn add sp-react-native-mqtt
+yarn add shehankonecranes/sp-react-native-mqtts
 ```
 
 #### Step 2: (Skip this step if you are using RN 0.60 or above as the module will be auto-linked)
 
 ```bash
-react-native link sp-react-native-mqtt
+react-native link sp-react-native-mqtts
 ```
 
 
@@ -92,7 +92,10 @@ import MQTT from 'sp-react-native-mqtt';
 /* create mqtt client */
 MQTT.createClient({
   uri: 'mqtt://test.mosquitto.org:1883',
-  clientId: 'your_client_id'
+  clientId: 'your_client_id',
+  tls: true, // true: to enable SSL Handshake.
+  certificate: 'base64-certificate',
+  ca: 'base64-ca-certificate',
 }).then(function(client) {
 
   client.on('closed', function() {
@@ -169,4 +172,11 @@ MQTT.createClient({
 
 ```text
 INHERIT FROM MQTT LIBRARY (progress)
+```
+
+## Initial Author
+
+```text
+Ioannis Kokkinidis
+SudoPlz
 ```

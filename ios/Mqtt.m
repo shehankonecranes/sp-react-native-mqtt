@@ -12,6 +12,9 @@
 #import "Mqtt.h"
 #import <React/RCTEventEmitter.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 @interface Mqtt ()
 
 @property (strong, nonatomic) MQTTSessionManager *manager;
@@ -43,7 +46,8 @@
                                 @"willMsg": [NSNull null],
                                 @"willtopic": @"",
                                 @"willQos": @0,
-                                @"willRetainFlag": @NO
+                                @"willRetainFlag": @NO,
+                                @"certificatePass": @"",
                                 };
         
     }
@@ -78,6 +82,37 @@
         securityPolicy.allowInvalidCertificates = YES;
     }
     
+    NSArray *certificates = nil;
+    if(securityPolicy != nil && self.options[@"certificate"]){
+
+        @try {
+            
+            NSString *base64 = self.options[@"certificate"];        
+            NSData *base64Data = [[NSData alloc] initWithBase64EncodedString:base64 options:NSDataBase64DecodingIgnoreUnknownCharacters];
+            
+            CFArrayRef keyref = NULL;
+            OSStatus importStatus = SecPKCS12Import((__bridge CFDataRef)base64Data,
+                                                        (__bridge CFDictionaryRef)@{(__bridge id)kSecImportExportPassphrase: @""},
+                                                        &keyref);
+            
+            CFDictionaryRef identityDict = CFArrayGetValueAtIndex(keyref, 0);
+            
+            SecIdentityRef identityRef = (SecIdentityRef)CFDictionaryGetValue(identityDict,
+                                                                                 kSecImportItemIdentity);
+            
+            SecCertificateRef cert = NULL;
+            OSStatus status = SecIdentityCopyCertificate(identityRef, &cert);
+            
+            NSArray *clientCerts = @[(__bridge id)identityRef, (__bridge id)cert];
+                
+            // Certificate
+            certificates = clientCerts;
+        }
+        @catch (NSException *exception) {
+            NSLog(@"[KC MQTTS] %@", exception.reason);
+        }
+    }
+    
     NSData *willMsg = nil;
     if(self.options[@"willMsg"] != [NSNull null]) {
         willMsg = [self.options[@"willMsg"] dataUsingEncoding:NSUTF8StringEncoding];
@@ -107,9 +142,10 @@
                  willRetainFlag:[self.options[@"willRetainFlag"] boolValue]
                    withClientId:[self.options valueForKey:@"clientId"]
                  securityPolicy:securityPolicy
-                   certificates:nil
+                   certificates:certificates
                   protocolLevel:MQTTProtocolVersion311
                  connectHandler:^(NSError *error) {
+                     NSLog(@"[KC MQTTS] connection error %@", error);
          }];
 
     } else {

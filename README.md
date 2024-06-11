@@ -92,7 +92,10 @@ import MQTT from 'sp-react-native-mqtt';
 /* create mqtt client */
 MQTT.createClient({
   uri: 'mqtt://test.mosquitto.org:1883',
-  clientId: 'your_client_id'
+  clientId: 'your_client_id',
+  tls: true, // true: to enable SSL Handshake.
+  certificate: 'base64-certificate',
+  ca: 'base64-ca-certificate',
 }).then(function(client) {
 
   client.on('closed', function() {

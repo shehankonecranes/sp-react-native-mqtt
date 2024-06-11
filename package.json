@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shehankonecranes/sp-react-native-mqtt.git"
+    "url": "git+https://github.com/shehankonecranes/sp-react-native-mqtts.git"
   },
   "keywords": [
     "mqtt",
@@ -23,7 +23,7 @@
   "contributors": [],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/shehankonecranes/sp-react-native-mqtt/issues"
+    "url": "https://github.com/shehankonecranes/sp-react-native-mqtts/issues"
   },
-  "homepage": "https://github.com/shehankonecranes/sp-react-native-mqtt"
+  "homepage": "https://github.com/shehankonecranes/sp-react-native-mqtts"
 }

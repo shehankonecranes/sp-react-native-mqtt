@@ -170,3 +170,10 @@ MQTT.createClient({
 ```text
 INHERIT FROM MQTT LIBRARY (progress)
 ```
+
+## Initial Author
+
+```text
+Ioannis Kokkinidis
+SudoPlz
+```

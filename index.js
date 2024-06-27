@@ -118,7 +118,7 @@ module.exports = {
     if(clientIdx > -1)
       this.clients.splice(clientIdx, 1);
 
-    if(this.clients.length > 0) {
+    if(this.clients.length === 0) {
       this.eventHandler.remove();
       this.eventHandler = null;
     }

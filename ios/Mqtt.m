@@ -49,11 +49,11 @@
                                 @"willRetainFlag": @NO,
                                 @"certificatePass": @"",
                                 };
-        
+
     }
-    
-    
-    
+
+
+
     return self;
 }
 
@@ -67,59 +67,81 @@
     for (NSString *key in options.keyEnumerator) { // Replace default options
         [self.options setValue:options[key] forKey:key];
     }
-
-   
-    
     
     return self;
 }
 
 - (void) connect {
-    
+
     MQTTSSLSecurityPolicy *securityPolicy = nil;
     if(self.options[@"tls"]) {
         securityPolicy = [MQTTSSLSecurityPolicy policyWithPinningMode:MQTTSSLPinningModeNone];
         securityPolicy.allowInvalidCertificates = YES;
     }
-    
+
     NSArray *certificates = nil;
     if(securityPolicy != nil && self.options[@"certificate"]){
 
         @try {
-            
-            NSString *base64 = self.options[@"certificate"];        
+
+            NSString *base64 = self.options[@"certificate"];
             NSData *base64Data = [[NSData alloc] initWithBase64EncodedString:base64 options:NSDataBase64DecodingIgnoreUnknownCharacters];
             
+            NSString *base64CA = self.options[@"ca"];
+            
+            NSData *base64DataCA = [[NSData alloc] initWithBase64EncodedString:base64CA options:NSDataBase64DecodingIgnoreUnknownCharacters];
+
             CFArrayRef keyref = NULL;
             OSStatus importStatus = SecPKCS12Import((__bridge CFDataRef)base64Data,
                                                         (__bridge CFDictionaryRef)@{(__bridge id)kSecImportExportPassphrase: @""},
                                                         &keyref);
+            NSLog(@"[MQTTS] import status certificate %@", importStatus);
             
+            
+            OSStatus err = noErr;
+            SecCertificateRef rootCert = SecCertificateCreateWithData(kCFAllocatorDefault, (CFDataRef) base64DataCA);
+          
+            CFTypeRef result;
+            NSDictionary* dict = [NSDictionary dictionaryWithObjectsAndKeys: (id)kSecClassCertificate, kSecClass,rootCert, kSecValueRef,nil];
+
+            err = SecItemAdd((CFDictionaryRef)dict, &result);
+            
+            
+            if( err == noErr) {
+                NSLog(@"Install root certificate success");
+            } else if( err == errSecDuplicateItem ) {
+                NSLog(@"duplicate root certificate entry");
+            } else {
+                NSLog(@"install root certificate failure");
+            }
+
+            NSLog(@"[MQTTS] import status CA %@",result);
+
             CFDictionaryRef identityDict = CFArrayGetValueAtIndex(keyref, 0);
-            
+
             SecIdentityRef identityRef = (SecIdentityRef)CFDictionaryGetValue(identityDict,
                                                                                  kSecImportItemIdentity);
-            
+
             SecCertificateRef cert = NULL;
             OSStatus status = SecIdentityCopyCertificate(identityRef, &cert);
-            
+
             NSArray *clientCerts = @[(__bridge id)identityRef, (__bridge id)cert];
-                
+
             // Certificate
             certificates = clientCerts;
         }
         @catch (NSException *exception) {
-            NSLog(@"[KC MQTTS] %@", exception.reason);
+            NSLog(@"[MQTTS] %@", exception.reason);
         }
     }
-    
+
     NSData *willMsg = nil;
     if(self.options[@"willMsg"] != [NSNull null]) {
         willMsg = [self.options[@"willMsg"] dataUsingEncoding:NSUTF8StringEncoding];
     }
     if (!self.manager) {
         dispatch_queue_t queue = dispatch_queue_create("com.hawking.app.anchor.mqtt", NULL);
-        
+
         self.manager = [[MQTTSessionManager alloc] initWithPersistence:NO maxWindowSize:MQTT_MAX_WINDOW_SIZE maxMessages:MQTT_MAX_MESSAGES maxSize:MQTT_MAX_SIZE maxConnectionRetryInterval:60.0 connectInForeground:NO streamSSLLevel:nil queue: queue];
         self.manager.delegate = self;
         MQTTCFSocketTransport *transport = [[MQTTCFSocketTransport alloc] init];
@@ -145,7 +167,7 @@
                    certificates:certificates
                   protocolLevel:MQTTProtocolVersion311
                  connectHandler:^(NSError *error) {
-                     NSLog(@"[KC MQTTS] connection error %@", error);
+                     NSLog(@"[MQTTS] connection error %@", error);
          }];
 
     } else {

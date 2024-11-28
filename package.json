@@ -51,5 +51,6 @@
   "bugs": {
     "url": "https://github.com/SudoPlz/react-native-mqtt/issues"
   },
-  "homepage": "https://github.com/SudoPlz/react-native-mqtt#readme"
+  "homepage": "https://github.com/SudoPlz/react-native-mqtt#readme",
+  "packageManager": "yarn@1.22.22"
 }

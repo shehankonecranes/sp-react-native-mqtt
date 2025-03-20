@@ -188,6 +188,7 @@ public class RCTMqtt implements MqttCallbackExtended {
         mqttOptions.setKeepAliveInterval(options.getInt("keepalive"));
         mqttOptions.setMaxInflight(1000);
         mqttOptions.setConnectionTimeout(10);
+        mqttOptions.setCleanSession(options.getBoolean("clean"));
 
         StringBuilder uri = new StringBuilder("tcp://");
         if (options.getBoolean("tls")) {

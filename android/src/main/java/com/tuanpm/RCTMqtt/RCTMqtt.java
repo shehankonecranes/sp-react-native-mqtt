@@ -48,6 +48,8 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.cert.Certificate;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -208,8 +210,8 @@ public class RCTMqtt implements MqttCallbackExtended {
 
                     byte[] encodedCA = android.util.Base64.decode(caBase64, Base64.DEFAULT);
                     ByteArrayInputStream isCA  =  new ByteArrayInputStream(encodedCA);
-                    var cf = CertificateFactory.getInstance("X.509");
-                    var ca = cf.generateCertificate(isCA);
+                    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                    Certificate ca = cf.generateCertificate(isCA);
 
                     KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
                     trustStore.load(null,null);

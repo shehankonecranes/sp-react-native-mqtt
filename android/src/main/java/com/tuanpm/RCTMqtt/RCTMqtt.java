@@ -48,6 +48,8 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.cert.Certificate;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -186,6 +188,7 @@ public class RCTMqtt implements MqttCallbackExtended {
         mqttOptions.setKeepAliveInterval(options.getInt("keepalive"));
         mqttOptions.setMaxInflight(1000);
         mqttOptions.setConnectionTimeout(10);
+        mqttOptions.setCleanSession(options.getBoolean("clean"));
 
         StringBuilder uri = new StringBuilder("tcp://");
         if (options.getBoolean("tls")) {

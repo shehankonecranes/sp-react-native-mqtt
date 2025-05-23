@@ -205,18 +205,20 @@ public class RCTMqtt implements MqttCallbackExtended {
                     ByteArrayInputStream isCertificate  =  new ByteArrayInputStream(encodedCert);
                     clientStore.load(isCertificate, options.getString("certificatePass").toCharArray());
 
+                    log("[ MQTT] have certificate " + isCertificate);
                     KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                     kmf.init(clientStore, "testPass".toCharArray());
                     KeyManager[] kms = kmf.getKeyManagers();
 
-                    byte[] encodedCA = android.util.Base64.decode(caBase64, Base64.DEFAULT);
-                    ByteArrayInputStream isCA  =  new ByteArrayInputStream(encodedCA);
-                    CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                    Certificate ca = cf.generateCertificate(isCA);
+                    // Below not needed
+                    byte encodedCertCa[] = Base64.decode(caBase64,Base64.DEFAULT);
+                    ByteArrayInputStream inputStream  =  new ByteArrayInputStream(encodedCertCa);
+                    CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+                    X509Certificate cert = (X509Certificate)certFactory.generateCertificate(inputStream);
 
                     KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
                     trustStore.load(null,null);
-                    trustStore.setCertificateEntry("ca", ca);
+                    trustStore.setCertificateEntry("ca", cert);
 
                     TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                     tmf.init(trustStore);
@@ -234,35 +236,35 @@ public class RCTMqtt implements MqttCallbackExtended {
                 }
             } else {
                 try {
-                /*
-                 * http://stackoverflow.com/questions/3761737/https-get-ssl-with-android-and-
-                 * self-signed-server-certificate
-                 *
-                 * WARNING: for anybody else arriving at this answer, this is a dirty, horrible
-                 * hack and you must not use it for anything that matters. SSL/TLS without
-                 * authentication is worse than no encryption at all - reading and modifying
-                 * your "encrypted" data is trivial for an attacker and you wouldn't even know
-                 * it was happening
-                 */
-                SSLContext sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(null, new X509TrustManager[] { new X509TrustManager() {
-                    public void checkClientTrusted(X509Certificate[] chain, String authType)
-                            throws CertificateException {
-                    }
+                    /*
+                     * http://stackoverflow.com/questions/3761737/https-get-ssl-with-android-and-
+                     * self-signed-server-certificate
+                     *
+                     * WARNING: for anybody else arriving at this answer, this is a dirty, horrible
+                     * hack and you must not use it for anything that matters. SSL/TLS without
+                     * authentication is worse than no encryption at all - reading and modifying
+                     * your "encrypted" data is trivial for an attacker and you wouldn't even know
+                     * it was happening
+                     */
+                    SSLContext sslContext = SSLContext.getInstance("TLS");
+                    sslContext.init(null, new X509TrustManager[] { new X509TrustManager() {
+                        public void checkClientTrusted(X509Certificate[] chain, String authType)
+                                throws CertificateException {
+                        }
 
-                    public void checkServerTrusted(X509Certificate[] chain, String authType)
-                            throws CertificateException {
-                    }
+                        public void checkServerTrusted(X509Certificate[] chain, String authType)
+                                throws CertificateException {
+                        }
 
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                } }, new SecureRandom());
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return new X509Certificate[0];
+                        }
+                    } }, new SecureRandom());
 
-                mqttOptions.setSocketFactory(sslContext.getSocketFactory());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+                    mqttOptions.setSocketFactory(sslContext.getSocketFactory());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -318,27 +320,27 @@ public class RCTMqtt implements MqttCallbackExtended {
     public boolean isConnected() {
         return client.isConnected();
     }
-	/*
-	 * Returns all connected topics as object
-	 */
-	public WritableArray getTopics() {
-		WritableArray ret = new WritableNativeArray();
-		for(Map.Entry<String, Integer> entry : topics.entrySet()) {
-			WritableMap tmp = Arguments.createMap();
-			tmp.putString("topic", entry.getKey());
-			tmp.putInt("qos", entry.getValue());
-			ret.pushMap(tmp);
-		}
-		return ret;
-	}
+    /*
+     * Returns all connected topics as object
+     */
+    public WritableArray getTopics() {
+        WritableArray ret = new WritableNativeArray();
+        for(Map.Entry<String, Integer> entry : topics.entrySet()) {
+            WritableMap tmp = Arguments.createMap();
+            tmp.putString("topic", entry.getKey());
+            tmp.putInt("qos", entry.getValue());
+            ret.pushMap(tmp);
+        }
+        return ret;
+    }
 
-	/*
-	 *  Check if listening to a specifc topic
-	 */
-	public boolean isSubbed(String topic) {
-		//log("isSubbed. checking is topic: "+ topic);
-		return topics.containsKey(topic);
-	}
+    /*
+     *  Check if listening to a specifc topic
+     */
+    public boolean isSubbed(String topic) {
+        //log("isSubbed. checking is topic: "+ topic);
+        return topics.containsKey(topic);
+    }
 
     public void connect() {
         try {
@@ -456,7 +458,7 @@ public class RCTMqtt implements MqttCallbackExtended {
      * @param retain
      */
     public void publish(@NonNull final String topic, @NonNull final String payload, final int qos,
-            final boolean retain) {
+                        final boolean retain) {
         try {
             byte[] encodedPayload = payload.getBytes("UTF-8");
             MqttMessage message = new MqttMessage(encodedPayload);
